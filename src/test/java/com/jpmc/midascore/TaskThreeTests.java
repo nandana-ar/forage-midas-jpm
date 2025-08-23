@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
+import com.jpmc.midascore.entity.UserRecord;
+import com.jpmc.midascore.repository.UserRepository;
+
+import java.util.Optional;
 
 @SpringBootTest
 @DirtiesContext
@@ -23,6 +27,9 @@ public class TaskThreeTests {
     @Autowired
     private FileLoader fileLoader;
 
+    @Autowired
+    private UserRepository userRepository;  // <-- Inject this
+
     @Test
     void task_three_verifier() throws InterruptedException {
         userPopulator.populate();
@@ -30,17 +37,22 @@ public class TaskThreeTests {
         for (String transactionLine : transactionLines) {
             kafkaProducer.send(transactionLine);
         }
-        Thread.sleep(2000);
 
+        // Wait long enough for all transactions to be processed
+        Thread.sleep(20000);
 
-        logger.info("----------------------------------------------------------");
-        logger.info("----------------------------------------------------------");
-        logger.info("----------------------------------------------------------");
-        logger.info("use your debugger to find out what waldorf's balance is after all transactions are processed");
-        logger.info("kill this test once you find the answer");
-        while (true) {
-            Thread.sleep(20000);
-            logger.info("...");
+        // Query for the waldorf user
+        Optional<UserRecord> waldorfOpt = userRepository.findByNameIgnoreCase("waldorf");
+        if (waldorfOpt.isPresent()) {
+            UserRecord waldorf = waldorfOpt.get();
+            float balance = waldorf.getBalance();
+            int roundedBalance = (int) Math.floor(balance);
+            logger.info("Waldorf's final balance (rounded down): {}", roundedBalance);
+        } else {
+            logger.error("User 'waldorf' not found!");
         }
+
+        // End test — no infinite loop
     }
 }
+

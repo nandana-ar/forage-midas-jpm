@@ -1,5 +1,6 @@
 package com.jpmc.midascore;
 
+import com.jpmc.midascore.component.DatabaseConduit;
 import com.jpmc.midascore.foundation.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +13,20 @@ public class KafkaTransactionListener {
 
     private static final Logger logger = LoggerFactory.getLogger(KafkaTransactionListener.class);
 
+    private final DatabaseConduit databaseConduit;
+
+    public KafkaTransactionListener(DatabaseConduit databaseConduit) {
+        this.databaseConduit = databaseConduit;
+    }
+
     @KafkaListener(topics = "${general.kafka-topic}", groupId = "midas-core-group", containerFactory = "transactionKafkaListenerContainerFactory")
     public void listen(Transaction transaction) {
         // Set a breakpoint here to inspect transactions in debugger
         logger.info("Received transaction: {}", transaction);
+        databaseConduit.processTransaction(
+                transaction.getSenderId(),
+                transaction.getRecipientId(),
+                transaction.getAmount()
+        );
     }
 }

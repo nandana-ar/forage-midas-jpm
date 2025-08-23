@@ -1,4 +1,4 @@
-package com.jpmc.midascore.config;
+package com.jpmc.midascore;
 
 import com.jpmc.midascore.foundation.Transaction;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
